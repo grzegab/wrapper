@@ -71,3 +71,28 @@ services:
 #    networks:
 #      - proxy
 #      - default
+
+#  srv_selenium:
+#    container_name: srv_selenium
+#    image: selenium/standalone-chrome-debug:3.11.0-californium
+#    ports:
+#      - "4444:4444"
+#      - "5900:5900"
+#    networks:
+#      srv:
+#        ipv4_address: 172.16.232.15
+#    extra_hosts:
+#      - localmachine.pl:172.16.232.10
+#      - grzegab.localmachine.pl:172.16.232.10
+#      - camping.localmachine.pl:172.16.232.10
+#      - zdalni.localmachine.pl:172.16.232.10
+#    links:
+#      - srv_mysql
+#      - srv_php
+
+#  redis:
+#    image: redis:alpine
+#    networks:
+#      - default
+#    labels:
+#      - "traefik.enabled=false"
