@@ -1,16 +1,8 @@
 FROM php:7.2-apache-stretch
 
-COPY config/php.ini /usr/local/etc/php/
-#COPY conf/vhost.conf /etc/apache2/sites-available/vhost.conf
-
-#ssl
-#COPY ssl/fullchain.pem /etc/apache2/ssl/fullchain.pem
-#COPY ssl/privkey.pem /etc/apache2/ssl/privkey.pem
-
 #vhosts
 RUN a2enmod ssl
 RUN a2enmod rewrite
-#RUN a2ensite vhost
 RUN service apache2 restart
 
 #enva przekazac w docker compose
