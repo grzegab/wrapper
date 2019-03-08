@@ -1,0 +1,42 @@
+version: "3.5"
+
+networks:
+  proxy:
+    external: true
+  default:
+    driver: bridge
+
+services:
+  #Build js files
+  node:
+    image: node:11.10-stretch
+    container_name: node_server
+    command: "npm run build" #default for react
+    volumes:
+      - './front:/usr/src/app'
+    working_dir: '/usr/src/app'
+    environment:
+      - NODE_ENV=dev
+      - PATH=/usr/src/app/node_modules/.bin:$PATH
+    labels:
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+      - default
+
+    #Server builded files
+    nginx_server:
+      image: nginx:latest
+      container_name: web_server
+      volumes:
+        - './front/public:/usr/share/nginx/html'
+        - './front/dist:/usr/share/nginx/html/dist'
+      expose:
+        - 80
+      command: ['nginx', '-g', 'daemon off;']
+      labels:
+        - "traefik.frontend.rule=Host:{{HOST}}.traefik.localhost"
+        - "traefik.docker.network=proxy"
+      networks:
+        - proxy
+        - default

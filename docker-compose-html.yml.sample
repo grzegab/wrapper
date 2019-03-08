@@ -1,0 +1,24 @@
+version: "3.5"
+
+networks:
+  proxy:
+    external: true
+  default:
+    driver: bridge
+
+services:
+  nginx_server:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - './front/public:/usr/share/nginx/html'
+      - './front/dist:/usr/share/nginx/html/dist'
+    expose:
+      - 80
+    command: ['nginx', '-g', 'daemon off;']
+    labels:
+      - "traefik.frontend.rule=Host:{{HOST}}.traefik.localhost"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+      - default

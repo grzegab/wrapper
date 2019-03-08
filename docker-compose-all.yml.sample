@@ -1,0 +1,111 @@
+version: "3.5"
+
+networks:
+  proxy:
+    external: true
+  default:
+    driver: bridge
+
+services:
+  web:
+    build: docker/php
+    restart: always
+    container_name: php
+    volumes:
+      - ./app:/var/www/html
+      - ./config/php/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
+    expose:
+      - 80
+      - 443
+    environment:
+      VIRTUAL_HOST: {{HOST}}.traefik.localhost,www.{{HOST}}.traefik.localhost
+      PHP_DEBBUGER: xdebug
+      APACHE_DOCUMENT_ROOT: /var/www/html/public
+    labels:
+      - "traefik.frontend.rule=Host:{{HOST}}.traefik.localhost"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+      - default
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: db
+    ports:
+      - 13333:3306
+    volumes:
+      - ./config/mysql/conf.cnf:/etc/mysql/conf.d/custom.cnf:ro
+      - ./data/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: {{HOST}}
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pass
+    expose:
+      - 3306
+    networks:
+      - default
+    labels:
+      - "traefik.enabled=true"
+
+  # RUN in APP dir
+  #  docker run --rm --interactive --tty \
+  #  --volume $PWD:/app \
+  #  --user $(id -u):$(id -g) \
+  #  composer install
+
+  node:
+    image: node:11.10-stretch
+    container_name: node
+    command: "npm run build" #default for react
+    volumes:
+      - './front:/usr/src/app'
+    working_dir: '/usr/src/app'
+    environment:
+      - NODE_ENV=dev
+      - PATH=/usr/src/app/node_modules/.bin:$PATH
+    labels:
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+      - default
+    # TO USE INSTEAD apache with php - if static files are only seerved
+    #  nginx_server:
+    #    image: nginx:latest
+    #    container_name: nginx
+    #    volumes:
+    #      - './front/public:/usr/share/nginx/html'
+    #      - './front/dist:/usr/share/nginx/html/dist'
+    #    expose:
+    #      - 80
+    #    command: ['nginx', '-g', 'daemon off;']
+    #    labels:
+    #      - "traefik.frontend.rule=Host:{{HOST}}.traefik.localhost"
+    #      - "traefik.docker.network=proxy"
+    #    networks:
+    #      - proxy
+    #      - default
+
+    #    srv_selenium:
+    #      container_name: srv_selenium
+    #      image: selenium/standalone-chrome-debug:3.11.0-californium
+    #      ports:
+    #        - "4444:4444"
+    #        - "5900:5900"
+    #      networks:
+    #        srv:
+    #          ipv4_address: 172.16.232.15
+    #      extra_hosts:
+    #        - xxx.traefik.localhost:172.16.232.10
+    #      links:
+    #        - srv_mysql
+    #        - srv_php
+
+    redis:
+      image: redis:alpine
+      networks:
+        - default
+      labels:
+        - "traefik.enabled=false"
